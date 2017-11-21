@@ -11,9 +11,9 @@
 //Map drawing
 void map(SDL_Surface *s);
 //Structures
-typedef struct block{int x,y;}block;
-typedef struct obj{block a,b,c,d; char e;}obj;
-//typedef struct txt{SDL_Surface *w;TTF_Font *font; SDL_Rect tp; SDL_Color color}
+typedef struct block {int x,y;} block;
+typedef struct obj {block a,b,c,d; char e;} obj;
+typedef struct txt {SDL_Surface *w; TTF_Font *font; SDL_Rect tp; SDL_Color color;} txt;
 //Placing, generating and drawing
 void place(int t[sizey][sizex], block a);
 void dis(int t[sizey][sizex], block a);
@@ -22,6 +22,7 @@ void placeobj(int t[sizey][sizex], obj tetris);
 void removeobj(int t[sizey][sizex], obj tetris);
 void dblocks(SDL_Surface *s,int t[sizey][sizex]);
 void dnext(SDL_Surface *s,obj nxt);
+void settp(txt *wd, int x, int y, int w, int h);
 //void dpause(SDL_Surface *s, txt *w);
 //Movement
 obj downm(obj tetris);
@@ -53,14 +54,13 @@ void alldown(int t[sizey][sizex], int r[sizey]);
 void solidify(int t[sizey][sizex], obj tetris);
 void zerow(int r[sizey]);
 int cntscore(int r[sizey]);
-char* itoa (int value, char *result, int base);
-void dscore(int value, char *result, SDL_Surface *w,SDL_Surface *s,TTF_Font *font, SDL_Rect tpos, SDL_Color color);
+void dscore(int value, char *result,SDL_Surface *s,txt w);
 void setspeed(char *sp, int score);
 
 //System
-void print(TTF_Font *font,char* wd,SDL_Color color,SDL_Surface *w,SDL_Surface *s,SDL_Rect tpos){
-    w = TTF_RenderUTF8_Solid(font, wd, color);
-    SDL_BlitSurface(w, NULL, s, &tpos);
+void print(char* wd,SDL_Surface *s, txt *word){
+    word->w = TTF_RenderUTF8_Solid(word->font, wd, word->color);
+    SDL_BlitSurface(word->w, NULL, s, &(word->tp));
 }
 Uint32 tr(Uint32 ms, void *param) {
     SDL_Event ev;
@@ -78,13 +78,13 @@ int main(int argc, char *argv[])
     int period = 60;
     int tick = 0;
     char speed = 8;
-    TTF_Font *font;
-    SDL_Surface *words;
-    SDL_Rect tpos = { 332, 52, 40, 20 };
-    SDL_Color feher = {255, 255, 255};
+    txt stdtxt;
+    settp(&stdtxt,332,52,40,20);
+    SDL_Color white = {255, 255, 255};
+    stdtxt.color = white;
     int score = 0;
-    char *sscore;
-    itoa(score,sscore,10);
+    char sscore [10];
+    sprintf(sscore, "%d", score);
     bool quit = false;
     bool pause = false;
     int i,g;
@@ -107,21 +107,16 @@ int main(int argc, char *argv[])
     }
     SDL_WM_SetCaption("Tetris", "Tetris");
     TTF_Init();
-    font = TTF_OpenFont("/usr/share/fonts/TTF/UbuntuMono-R.ttf", 16);
-    font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
-    if (!font) {
+    stdtxt.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
+    if (!stdtxt.font) {
         fprintf(stderr, "Was not able to open font! %s\n", TTF_GetError());
         exit(1);
     }
 
-
     map(screen);
-    print(font,"Score:",feher,words,screen,tpos);
-    tpos.x = 352;
-    tpos.y = 72;
-    tpos.w = 40;
-    tpos.h = 20;
-    print(font,sscore,feher,words,screen,tpos);
+    print("Score:", screen, &stdtxt);
+    settp(&stdtxt,352,72,40,20);
+    print(sscore,screen,&stdtxt);
 
     obj current,nxt;
     current = genobj();
@@ -136,7 +131,6 @@ int main(int argc, char *argv[])
         switch(ev.type)
         {
         case SDL_KEYDOWN:
-            //kd = true;
             switch(ev.key.keysym.sym)
             {
             case SDLK_DOWN:
@@ -208,7 +202,7 @@ int main(int argc, char *argv[])
                     alldown(field,row);
                     score += cntscore(row);
                     zerow(row);
-                    dscore(score,sscore,words,screen,font,tpos,feher);
+                    dscore(score,sscore,screen,stdtxt);
                     dblocks(screen, field);
                     SDL_Flip(screen);
             }}
@@ -220,7 +214,7 @@ int main(int argc, char *argv[])
     }
 
     SDL_RemoveTimer(t);
-    SDL_FreeSurface(words);
+    SDL_FreeSurface(stdtxt.w);
     SDL_Quit();
 
     return 0;
@@ -432,6 +426,14 @@ void dnext(SDL_Surface *s,obj nxt)
         boxRGBA(s,342,151,362,171,0,0,255,255);
         break;
     }
+}
+//Sets position of texts
+void settp(txt *wd, int x, int y, int w, int h)
+{
+    wd->tp.x = x;
+    wd->tp.y = y;
+    wd->tp.w = w;
+    wd->tp.h = h;
 }
 //Moves object down
 obj downm(obj tetris)
@@ -888,31 +890,6 @@ void zerow(int r[sizey])
         r[i] = 0;
     }
 }
-//Converts score into string
-char* itoa(int value, char *result, int base)
-{
-    // check that the base if valid
-    if (base < 2 || base > 36) { *result = '\0'; return result; }
-
-    char* ptr = result, *ptr1 = result, tmp_char;
-    int tmp_value;
-
-    do {
-        tmp_value = value;
-        value /= base;
-        *ptr++ = "zyxwvutsrqponmlkjihgfedcba9876543210123456789abcdefghijklmnopqrstuvwxyz" [35 + (tmp_value - value * base)];
-    } while ( value );
-
-    // Apply negative sign
-    if (tmp_value < 0) *ptr++ = '-';
-    *ptr-- = '\0';
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr--= *ptr1;
-        *ptr1++ = tmp_char;
-    }
-    return result;
-}
 //Counts gamescore
 int cntscore(int r[sizey])
 {
@@ -948,11 +925,11 @@ int cntscore(int r[sizey])
     }
 }
 //Draws score
-void dscore(int value, char *result, SDL_Surface *w,SDL_Surface *s,TTF_Font *font, SDL_Rect tpos, SDL_Color color)
+void dscore(int value, char *result, SDL_Surface *s, txt w)
 {
     boxRGBA(s,352,72,399,99,255,0,0,255);
-    itoa(value,result,10);
-    print(font,result,color,w,s,tpos);
+    sprintf(result, "%d", value);
+    print(result,s,&w);
 }
 //sets game speed
 void setspeed(char *sp, int score)
@@ -991,14 +968,4 @@ void setspeed(char *sp, int score)
         {*sp= 0;}
         break;}
 }
-
-
-
-
-
-
-
-
-
-
 
