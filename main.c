@@ -1,7 +1,6 @@
 #include <SDL.h>
 #include <SDL_gfxPrimitives.h>
 #include <SDL_ttf.h>
-#include <math.h>
 #include <stdbool.h>
 #include <time.h>
 #include <stdio.h>
@@ -20,10 +19,12 @@ void dis(int t[sizey][sizex], block a);
 obj genobj();
 void placeobj(int t[sizey][sizex], obj tetris);
 void removeobj(int t[sizey][sizex], obj tetris);
+void placepred(int t[sizey][sizex], obj pred);
+void removepred(int t[sizey][sizex], obj pred);
 void dblocks(SDL_Surface *s,int t[sizey][sizex]);
 void dnext(SDL_Surface *s,obj nxt);
 void settp(txt *wd, int x, int y, int w, int h);
-//void dpause(SDL_Surface *s, txt *w);
+void dpause(SDL_Surface *s, txt *p);
 //Movement
 obj downm(obj tetris);
 obj down(int t[sizey][sizex], obj tetris);
@@ -38,6 +39,7 @@ bool rcollide(int t[sizey][sizex], obj tetris);
 bool dcollide(int t[sizey][sizex], obj tetris);
 obj dropm(int t[sizey][sizex], obj tetris);
 obj drop(int t[sizey][sizex], obj tetris);
+obj predm(int t[sizey][sizex], obj tetris,obj pred);
 obj shift(obj tetris);
 block ulm(block a);
 block urm(block a);
@@ -56,6 +58,21 @@ void zerow(int r[sizey]);
 int cntscore(int r[sizey]);
 void dscore(int value, char *result,SDL_Surface *s,txt w);
 void setspeed(char *sp, int score);
+void dmenu(SDL_Surface *s, txt *words);
+/*void playgame(SDL_Event ev,
+    SDL_Surface *screen,
+    SDL_TimerID t,
+    int period,
+    int tick,
+    char speed,
+    txt stdtxt,
+    SDL_Color white,
+    int score,
+    char sscore[10],
+    bool quit,
+    bool pause,
+    int field[sizey][sizex],
+    int row[sizey]);*/
 
 //System
 void print(char* wd,SDL_Surface *s, txt *word){
@@ -79,14 +96,17 @@ int main(int argc, char *argv[])
     int tick = 0;
     char speed = 8;
     txt stdtxt;
-    settp(&stdtxt,332,52,40,20);
     SDL_Color white = {255, 255, 255};
     stdtxt.color = white;
+    int cursor = 0;
     int score = 0;
     char sscore [10];
     sprintf(sscore, "%d", score);
     bool quit = false;
     bool pause = false;
+    bool pmen = false;
+    bool play = false;
+    obj current,nxt,predict;
     int i,g;
     int field[sizey][sizex], row[sizey];
     for(i = 0; i < 20; i++)
@@ -107,24 +127,16 @@ int main(int argc, char *argv[])
     }
     SDL_WM_SetCaption("Tetris", "Tetris");
     TTF_Init();
-    stdtxt.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
+    stdtxt.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 108);
     if (!stdtxt.font) {
         fprintf(stderr, "Was not able to open font! %s\n", TTF_GetError());
         exit(1);
     }
 
-    map(screen);
-    print("Score:", screen, &stdtxt);
-    settp(&stdtxt,352,72,40,20);
-    print(sscore,screen,&stdtxt);
-
-    obj current,nxt;
-    current = genobj();
-    nxt = genobj();
-    placeobj(field,current);
-    dblocks(screen,field);
-    dnext(screen,nxt);
+    dmenu(screen,&stdtxt);
+    rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,0,0,255,255);
     SDL_Flip(screen);
+    stdtxt.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
     t = SDL_AddTimer(period, tr, NULL);
     while (!quit) {
         SDL_WaitEvent(&ev);
@@ -134,17 +146,81 @@ int main(int argc, char *argv[])
             switch(ev.key.keysym.sym)
             {
             case SDLK_DOWN:
+                if(cursor < 4)
+                {
+                    rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,255,255,255,255);
+                    cursor += 1;
+                    rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,0,0,255,255);
+                    SDL_Flip(screen);
+                }
+                break;
+            case SDLK_UP:
+
+                if(cursor > 0)
+                {
+                    rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,255,255,255,255);
+                    cursor -= 1;
+                    rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,0,0,255,255);
+                    SDL_Flip(screen);
+                }
+                break;
+            case SDLK_RETURN:
+                if(cursor == 0)
+                {
+                    play = true;
+                    boxRGBA(screen,0,0,410,470,0,0,0,255);
+                    map(screen);
+                    settp(&stdtxt,332,52,40,20);
+                    print("Score:", screen, &stdtxt);
+                    settp(&stdtxt,352,72,40,20);
+                    print(sscore,screen,&stdtxt);
+
+                    current = genobj();
+                    nxt = genobj();
+                    predict = dropm(field,current);
+                    placepred(field,predict);
+                    placeobj(field,current);
+                    dblocks(screen,field);
+                    dnext(screen,nxt);
+                    SDL_Flip(screen);
+                }
+                else if(cursor == 4)
+                {
+                    quit = true;
+                }
+                break;
+            case SDLK_ESCAPE:
+                quit = true;
+                break;
+            }
+        case SDL_QUIT:
+            quit = true;
+            break;
+        }
+    while(play)
+    {
+        SDL_WaitEvent(&ev);
+        switch(ev.type)
+        {
+        case SDL_KEYDOWN:
+            switch(ev.key.keysym.sym)
+            {
+                case SDLK_DOWN:
                 if(!dcollide(field,current) && !pause)
                 {
                     current = down(field, current);
+                    predict = predm(field,current,predict);
                     dblocks(screen, field);
                     SDL_Flip(screen);
                 }
+                else if(pause)
+                {}
                 break;
             case SDLK_LEFT:
                 if(!lcollide(field,current) && !pause)
                 {
                     current = left(field, current);
+                    predict = predm(field,current,predict);
                     dblocks(screen, field);
                     SDL_Flip(screen);
                 }
@@ -153,6 +229,7 @@ int main(int argc, char *argv[])
                 if(!rcollide(field,current) && !pause)
                 {
                     current = right(field, current);
+                    predict = predm(field,current,predict);
                     dblocks(screen, field);
                     SDL_Flip(screen);
                 }
@@ -161,6 +238,7 @@ int main(int argc, char *argv[])
                 if(!rotcol(field,current) && !pause)
                 {
                     current = lftr(field, current);
+                    predict = predm(field,current,predict);
                     dblocks(screen, field);
                     SDL_Flip(screen);
                 }
@@ -168,11 +246,18 @@ int main(int argc, char *argv[])
             case SDLK_x:
                 if(!pause){
                 current = drop(field, current);
+                removepred(field,predict);
                 dblocks(screen, field);
                 SDL_Flip(screen);}
                 break;
             case SDLK_SPACE:
                 pause = !pause;
+                if(pause)
+                {
+                    cursor = 0;
+                    dpause(screen,&stdtxt);
+                    SDL_Flip(screen);
+                }
                 break;
             }
         case SDL_USEREVENT:
@@ -183,14 +268,17 @@ int main(int argc, char *argv[])
             } else {
                 if(checkloss(field))
                 {
-                    quit = true;
+                    play = false;
                     break;
                 }
                     if(dcollide(field,current) || current.a.y == 19 || current.d.y == 19)
                     {
+                        removepred(field,predict);
                         solidify(field,current);
                         current= nxt;
                         nxt = genobj();
+                        predict = dropm(field,current);
+                        placepred(field,predict);
                         dnext(screen,nxt);
                     }
                     else
@@ -209,8 +297,55 @@ int main(int argc, char *argv[])
             break;
         case SDL_QUIT:
             quit = true;
+            play = false;
             break;
+            }
+        while(pause)
+        {
+            SDL_WaitEvent(&ev);
+            switch(ev.type)
+            {
+            case SDL_KEYDOWN:
+                switch(ev.key.keysym.sym)
+                {
+                case SDLK_DOWN:
+                    if(cursor == 0)
+                    {
+                        rectangleRGBA(screen,146,215 + 30*cursor,265,240 + 30*cursor,255,255,255,255);
+                        cursor += 1;
+                        rectangleRGBA(screen,146,215 + 30*cursor,265,240 + 30*cursor,0,255,0,255);
+                        SDL_Flip(screen);
+                    }
+                    break;
+                case SDLK_UP:
+                    if(cursor == 1)
+                    {
+                        rectangleRGBA(screen,146,215 + 30*cursor,265,240 + 30*cursor,255,255,255,255);
+                        cursor -= 1;
+                        rectangleRGBA(screen,146,215 + 30*cursor,265,240 + 30*cursor,0,255,0,255);
+                        SDL_Flip(screen);
+                    }
+                    break;
+                case SDLK_SPACE:
+                    pause = !pause;
+                    boxRGBA(screen,145,185,265,270,0,0,0,255);
+                    dblocks(screen,field);
+                    SDL_Flip(screen);
+                    break;
+                case SDLK_RETURN:
+                    if(cursor == 1)
+                    {
+                        play = false;
+                        boxRGBA(screen,0,0,410,470,0,0,0,255);
+                        dmenu(screen,&stdtxt);
+                        SDL_Flip(screen);
+                        cursor = 0;
+                    }
+                    break;
+                }
+            }
         }
+    }
     }
 
     SDL_RemoveTimer(t);
@@ -223,7 +358,7 @@ int main(int argc, char *argv[])
 //draws the playingfield
 void map(SDL_Surface *s)
 {
-    int i;
+    /*int i;
     for(i= 100; i < 311; i += 21)
         {
             lineRGBA(s,i,25,i,445,255,255,255,255);
@@ -231,11 +366,43 @@ void map(SDL_Surface *s)
     for(i = 25; i < 446; i += 21)
         {
             lineRGBA(s,100,i,310,i,255,255,255,255);
-        }
+        }*/
     rectangleRGBA(s,100, 25,310,445,255,255,255,255);
     rectangleRGBA(s,330, 50,400,100,255,255,255,255);
     boxRGBA(s,331,51,399,99,255,0,0,255);
     rectangleRGBA(s,320,150,405,193,255,255,255,255);
+}
+//Draws menu
+void dmenu(SDL_Surface *s, txt *words)
+{
+    words->font = TTF_OpenFont("LiberationSerif-Regular.ttf", 108);
+    SDL_Color blue = {0,0,255};
+    words->color = blue;
+    settp(words,80,10,200,100);
+    print("Tetris",s,words);
+    rectangleRGBA(s,60,150,360,200,255,255,255,255);
+    boxRGBA(s,61,151,359,199,153,0,0,255);
+    words->font = TTF_OpenFont("LiberationSerif-Regular.ttf", 50);
+    SDL_Color white = {255,255,255};
+    words->color = white;
+    settp(words,95,145,150,100);
+    print("Start Game",s,words);
+    rectangleRGBA(s,60,210,360,260,255,255,255,255);
+    boxRGBA(s,61,211,359,259,153,0,0,255);
+    settp(words,95,205,150,100);
+    print("Load Game",s,words);
+    rectangleRGBA(s,60,270,360,320,255,255,255,255);
+    boxRGBA(s,61,271,359,319,153,0,0,255);
+    settp(words,115,265,150,100);
+    print("Controlls",s,words);
+    rectangleRGBA(s,60,330,360,380,255,255,255,255);
+    boxRGBA(s,61,331,359,379,153,0,0,255);
+    settp(words,100,325,150,100);
+    print("High Score",s,words);
+    rectangleRGBA(s,60,390,360,440,255,255,255,255);
+    boxRGBA(s,61,391,359,439,153,0,0,255);
+    settp(words,105,387,150,100);
+    print("Exit Game",s,words);
 }
 //places blocks into the grid
 void place(int t[sizey][sizex],block a)
@@ -262,6 +429,22 @@ void removeobj(int t[sizey][sizex], obj tetris)
     dis(t,tetris.b);
     dis(t,tetris.c);
     dis(t,tetris.d);
+}
+//Places prediction on the field
+void placepred(int t[sizey][sizex], obj pred)
+{
+    t[pred.a.y][pred.a.x] = 3;
+    t[pred.b.y][pred.b.x] = 3;
+    t[pred.c.y][pred.c.x] = 3;
+    t[pred.d.y][pred.d.x] = 3;
+}
+//REmoves prediction on the field
+void removepred(int t[sizey][sizex], obj pred)
+{
+    t[pred.a.y][pred.a.x] = 0;
+    t[pred.b.y][pred.b.x] = 0;
+    t[pred.c.y][pred.c.x] = 0;
+    t[pred.d.y][pred.d.x] = 0;
 }
 //Generates object
 obj genobj()
@@ -367,13 +550,17 @@ void dblocks(SDL_Surface *s,int t[sizey][sizex])
             for(g = 0; g < 10; g++)
                 {
                     if(t[i][g] == 1 || t[i][g] == 2)
-                        {
-                            boxRGBA(s,101+ g*21,26+i*21,119 +g*21,45+ i*21,0,0,255,255);
-                        }
-                    else if(t[i][g] == 0)
-                        {
-                            boxRGBA(s,101 +g*21,26 +i*21,119 +g*21,45 +i*21,0,0,0,255);
-                        }
+                    {
+                        boxRGBA(s,101+ g*21,26+i*21,119 +g*21,45+ i*21,0,0,255,255);
+                    }
+                    else if(t[i][g] == 3)
+                    {
+                        boxRGBA(s,101 +g*21,26 +i*21,119 +g*21,45 +i*21,0,128,255,255);
+                    }
+                    else
+                    {
+                        boxRGBA(s,101 +g*21,26 +i*21,119 +g*21,45 +i*21,0,0,0,255);
+                    }
                 }
         }
 }
@@ -434,6 +621,24 @@ void settp(txt *wd, int x, int y, int w, int h)
     wd->tp.y = y;
     wd->tp.w = w;
     wd->tp.h = h;
+}
+//Draws pause menu
+void dpause(SDL_Surface *s, txt *p)
+{
+    //205;235
+    rectangleRGBA(s,175,185,235,210,255,255,255,255);
+    boxRGBA(s,176,186,234,209,153,0,0,255);
+    settp(p,187,187,60,30);
+    print("Pause",s,p);
+    rectangleRGBA(s,145,215,265,240,0,255,0,255);
+    boxRGBA(s,146,216,264,239,153,0,0,255);
+    settp(p,172,217,60,30);
+    print("Save game",s,p);
+    rectangleRGBA(s,145,245,265,270,255,255,255,255);
+    boxRGBA(s,146,246,264,269,153,0,0,255);
+    settp(p,168,248,60,30);
+    print("Exit to menu",s,p);
+    settp(p,352,72,40,20);
 }
 //Moves object down
 obj downm(obj tetris)
@@ -559,6 +764,14 @@ obj dropm(int t[sizey][sizex], obj tetris)
         tetris = downm(tetris);
     }
     return tetris;
+}
+//Moves prediction
+obj predm(int t[sizey][sizex], obj tetris,obj pred)
+{
+    removepred(t,pred);
+    pred = dropm(t,tetris);
+    placepred(t,pred);
+    return pred;
 }
 //Dropmove cycle
 obj drop(int t[sizey][sizex], obj tetris)
@@ -927,6 +1140,7 @@ int cntscore(int r[sizey])
 //Draws score
 void dscore(int value, char *result, SDL_Surface *s, txt w)
 {
+    w.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
     boxRGBA(s,352,72,399,99,255,0,0,255);
     sprintf(result, "%d", value);
     print(result,s,&w);
@@ -968,4 +1182,8 @@ void setspeed(char *sp, int score)
         {*sp= 0;}
         break;}
 }
+
+
+
+
 
