@@ -39,6 +39,27 @@
 			<Add library="SDL_image" />
 			<Add library="SDL_mixer" />
 		</Linker>
+		<Unit filename="Datas.h" />
+		<Unit filename="Draw.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Draw.h" />
+		<Unit filename="Game.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Game.h" />
+		<Unit filename="Keys.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Keys.h" />
+		<Unit filename="Move.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Move.h" />
+		<Unit filename="Placement.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Placement.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
