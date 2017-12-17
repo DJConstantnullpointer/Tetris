@@ -100,6 +100,7 @@ void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *h
     {
     case 0:
         *play = true;
+        *score = 0;
         boxRGBA(screen,0,0,410,470,0,0,0,255);
         map(screen);
         settp(tx16,332,52,40,20);
