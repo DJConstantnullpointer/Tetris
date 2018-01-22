@@ -13,13 +13,13 @@ obj downm(obj tetris)
     return tetris;
 }
 //Downward cycle
-obj down(int **t, obj tetris)
+obj down(int **t,char **cl, obj tetris)
 {
     obj tmp;
     tmp = tetris;
     tetris = downm(tetris);
-    removeobj(t,tmp);
-    placeobj(t,tetris);
+    removeobj(t,cl,tmp);
+    placeobj(t,cl,tetris);
     return tetris;
 }
 // Moves object left
@@ -35,13 +35,13 @@ obj leftm(obj tetris)
     return tetris;
 }
 //Leftward cycle
-obj left(int **t, obj tetris)
+obj left(int **t,char **cl, obj tetris)
 {
     obj tmp;
     tmp = tetris;
     tetris = leftm(tetris);
-    removeobj(t,tmp);
-    placeobj(t,tetris);
+    removeobj(t,cl,tmp);
+    placeobj(t,cl,tetris);
     return tetris;
 }
 // Moves object right
@@ -57,13 +57,13 @@ obj rightm(obj tetris)
     return tetris;
 }
 //Rightward cycle
-obj right(int **t, obj tetris)
+obj right(int **t,char **cl, obj tetris)
 {
     obj tmp;
     tmp = tetris;
     tetris = rightm(tetris);
-    removeobj(t,tmp);
-    placeobj(t,tetris);
+    removeobj(t,cl,tmp);
+    placeobj(t,cl,tetris);
     return tetris;
 }
 //Determines the case of collision
@@ -127,13 +127,13 @@ obj predm(int **t, obj tetris,obj pred)
     return pred;
 }
 //Dropmove cycle
-obj drop(int **t, obj tetris)
+obj drop(int **t,char **cl, obj tetris)
 {
     obj tmp;
     tmp = tetris;
     tetris = dropm(t,tetris);
-    removeobj(t,tmp);
-    placeobj(t,tetris);
+    removeobj(t,cl,tmp);
+    placeobj(t,cl,tetris);
     return tetris;
 }
 //shifts blocks within object
@@ -337,13 +337,13 @@ obj lrotate(obj tetris)
     return tetris;
 }
 //Leftward rotation cycle
-obj lftr(int **t, obj tetris)
+obj lftr(int **t,char **cl, obj tetris)
 {
     obj tmp;
     tmp = tetris;
     tetris = lrotate(tetris);
-    removeobj(t,tmp);
-    placeobj(t,tetris);
+    removeobj(t,cl,tmp);
+    placeobj(t,cl,tetris);
     return tetris;
 }
 //Determines collision for rotation

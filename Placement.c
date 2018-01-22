@@ -11,20 +11,20 @@ void dis(int **t, block a)
     t[a.y][a.x] = 0;
 }
 //Places objects into the grid
-void placeobj(int **t, obj tetris)
+void placeobj(int **t,char **c, obj tetris)
 {
-    place(t,tetris.a);
-    place(t,tetris.b);
-    place(t,tetris.c);
-    place(t,tetris.d);
+    place(t,tetris.a); c[tetris.a.y][tetris.a.x] = tetris.e;
+    place(t,tetris.b); c[tetris.b.y][tetris.b.x] = tetris.e;
+    place(t,tetris.c); c[tetris.c.y][tetris.c.x] = tetris.e;
+    place(t,tetris.d); c[tetris.d.y][tetris.d.x] = tetris.e;
 }
 //Removes object from the grid
-void removeobj(int **t, obj tetris)
+void removeobj(int **t,char **c, obj tetris)
 {
-    dis(t,tetris.a);
-    dis(t,tetris.b);
-    dis(t,tetris.c);
-    dis(t,tetris.d);
+    dis(t,tetris.a); c[tetris.a.y][tetris.a.x] = 'E';
+    dis(t,tetris.b); c[tetris.b.y][tetris.b.x] = 'E';
+    dis(t,tetris.c); c[tetris.c.y][tetris.c.x] = 'E';
+    dis(t,tetris.d); c[tetris.d.y][tetris.d.x] = 'E';
 }
 //Places prediction on the field
 void placepred(int **t, obj pred)

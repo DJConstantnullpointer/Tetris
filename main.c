@@ -18,22 +18,30 @@ int main(int argc, char *argv[])
     SDL_Event ev;
     SDL_Surface *screen;
     SDL_TimerID t;
-    int tick = 0, cursor = 0, score = 0, zero = 0, i;
+    Mix_Music *music;
+    int mus =0, flags = MIX_INIT_MP3;
+    int tick = 0, cursor = 0, score = 0, zero = 0, i,g;
     char speed = 8, sscore [10];
     txt tx16,tx24,tx50,tx88,tx108;
     SDL_Color white = {255, 255, 255}, blue = {0,0,255};
     sprintf(sscore, "%d", score);
     bool quit = false, pause = false, play = false, ctrlscreen = false, hsscreen = false, loss = false;
     obj current,nxt,predict;
-    FILE *save,*hs;
+    FILE *save = NULL,*hs;
+    char**cfield;
+    cfield = (char**) malloc(sizey*sizeof(char*));
     int **field, row[sizey];
     field = (int**) malloc(sizey * sizeof(int*));
     for(i = 0; i < sizey; i++)
         {
             row[i] = 0;
             field[i] = (int*) calloc(sizex,sizeof(int));
+            cfield[i] = (char*) malloc(sizex*sizeof(char));
         }
-
+    for(i = 0; i < sizey; i++)
+        {
+            for(g = 0; g < sizex; g++){cfield[i][g] = 'E';}
+        }
     /* Initialize SDL window */
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
     screen = SDL_SetVideoMode(410, 470, 0, SDL_ANYFORMAT);
@@ -41,6 +49,18 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Was not able to open window!\n");
         exit(1);
     }
+    if (SDL_Init(SDL_INIT_AUDIO) < 0)
+    {
+        printf("Failed to init SDL\n");
+        exit(2);
+    }
+    if (flags != (mus = Mix_Init(flags))) {
+        printf("Could not initialize mixer (result: %d).\n", mus);
+        printf("Mix_Init: %s\n", Mix_GetError());
+        exit(3);
+    }
+    Mix_OpenAudio(22050, AUDIO_S16SYS, 2, 640);
+    music = Mix_LoadMUS(Tetristheme);
     SDL_WM_SetCaption("Tetris", "Tetris");
     TTF_Init();
     tx16.font = TTF_OpenFont("LiberationSerif-Regular.ttf", 16);
@@ -52,6 +72,19 @@ int main(int argc, char *argv[])
     tx108.color = blue;
 
     dmenu(screen,&tx108,&tx50);
+    /*(boxRGBA(screen,0,0,20,20,128,128,128,255);
+    lineRGBA(screen,0,20,20,20,54,54,54,255);
+    lineRGBA(screen,0,19,19,19,54,54,54,255);
+    lineRGBA(screen,0,18,18,18,54,54,54,255);
+    lineRGBA(screen,20,0,20,19,85,85,85,255);
+    lineRGBA(screen,19,0,19,18,85,85,85,255);
+    lineRGBA(screen,18,0,18,17,85,85,85,255);
+    lineRGBA(screen,0,0,0,19,205,205,205,255);
+    lineRGBA(screen,1,1,1,18,205,205,205,255);
+    lineRGBA(screen,2,2,2,17,205,205,205,255);
+    lineRGBA(screen,1,0,20,0,234,234,234,255);
+    lineRGBA(screen,2,1,19,1,234,234,234,255);
+    lineRGBA(screen,3,2,18,2,234,234,234,255);*/
     rectangleRGBA(screen,60,150 + 60*cursor,360,200+ 60*cursor,0,255,0,255);
     SDL_Flip(screen);
     t = SDL_AddTimer(60, tr, NULL);
@@ -66,7 +99,7 @@ int main(int argc, char *argv[])
                 case SDLK_DOWN:
                 if(!pause && play && !dcollide(field,current))
                 {
-                    kdowng(screen,&current,&predict,field);
+                    kdowng(screen,&current,&predict,field,cfield);
                 }
                 else if(cursor == 0 && pause && play)
                 {
@@ -80,19 +113,19 @@ int main(int argc, char *argv[])
             case SDLK_LEFT:
                 if(!pause && play && !lcollide(field,current))
                 {
-                    kleftg(screen,&current,&predict,field);
+                    kleftg(screen,&current,&predict,field,cfield);
                 }
                 break;
             case SDLK_RIGHT:
                 if( !pause && play && !rcollide(field,current))
                 {
-                    krightg(screen,&current,&predict,field);
+                    krightg(screen,&current,&predict,field,cfield);
                 }
                 break;
             case SDLK_UP:
                 if(!pause && play && !rotcol(field,current))
                 {
-                    kupg(screen,&current,&predict,field);
+                    kupg(screen,&current,&predict,field,cfield);
                 }
                 else if(cursor == 1 && pause && play)
                 {
@@ -106,9 +139,9 @@ int main(int argc, char *argv[])
             case SDLK_x:
                 if(!pause && play)
                 {
-                    current = drop(field,current);
+                    current = drop(field,cfield,current);
                     removepred(field,predict);
-                    dblocks(screen, field);
+                    dblocks(screen, field,cfield);
                     SDL_Flip(screen);
                 }
                 else if(!play && hsscreen)
@@ -122,14 +155,16 @@ int main(int argc, char *argv[])
             case SDLK_SPACE:
                 if(pause && play)
                 {
+                    Mix_ResumeMusic();
                     pause = !pause;
                     boxRGBA(screen,145,185,265,270,0,0,0,255);
                     boxRGBA(screen,0,0,80,40,0,0,0,255);
-                    dblocks(screen,field);
+                    dblocks(screen,field,cfield);
                     SDL_Flip(screen);
                 }
                 else if(play && !pause)
                 {
+                    Mix_PauseMusic();
                     pause = !pause;
                     cursor = 0;
                     dpause(screen,&tx16);
@@ -147,12 +182,12 @@ int main(int argc, char *argv[])
             case SDLK_RETURN:
                     if(pause && play)
                     {
-                        kenterg(screen,&play,&pause,&cursor,&tx108,&tx50,&tx16,field,save,&current,&nxt,&predict,&score);
+                        kenterg(screen,&play,&pause,&cursor,&tx108,&tx50,&tx16,field,cfield,save,&current,&nxt,&predict,&score);
                     }
                     else if(!play && !ctrlscreen && !hsscreen)
                     {
                         kenterm(screen,&play,&quit,&ctrlscreen,&hsscreen,&tx88,&tx50,&tx24,&tx16,
-                                field,&current,&nxt,&predict,&score,sscore,&cursor,save,hs);
+                                field,cfield,&current,&nxt,&predict,&score,sscore,&cursor,save,hs,music);
                         SDL_Flip(screen);
                     }
                     break;
@@ -167,10 +202,11 @@ int main(int argc, char *argv[])
             } else {
                 if(checkloss(field))
                 {
+                    Mix_HaltMusic();
                     play = false;
                     loss = true;
                     settp(&tx16,0,0,40,20);
-                    cleanfield(field);
+                    cleanfield(field,cfield);
                     dmenu(screen,&tx108,&tx50);
                     print("You lost",screen,&tx16);
                     SDL_Flip(screen);
@@ -183,9 +219,9 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        current = down(field, current);
+                        current = down(field,cfield, current);
                     }
-                    stdevent(screen,&tx16,sscore,field,row,&score,&predict,&current);
+                    stdevent(screen,&tx16,sscore,field,cfield,row,&score,&predict,&current);
             }}
             if(loss)
             {
@@ -203,9 +239,11 @@ int main(int argc, char *argv[])
      for(i = 0; i < sizey; i++)
         {
             free(field[i]);
+            free(cfield[i]);
         }
 
     SDL_RemoveTimer(t);
+    Mix_FreeMusic(music);
     SDL_FreeSurface(tx16.w);
     SDL_FreeSurface(tx24.w);
     SDL_FreeSurface(tx50.w);

@@ -34,7 +34,7 @@ bool checkloss(int **t)
     return false;
 }
 //Clearing rows
-void clrrow(int **t, int r[sizey])
+void clrrow(int **t,char **cl, int r[sizey])
 {
     int i,g;
     for(i = 0; i < 20; i++)
@@ -44,12 +44,13 @@ void clrrow(int **t, int r[sizey])
             for(g = 0; g < 10; g++)
             {
                 t[i][g] = 0;
+                cl[i][g] = 'E';
             }
         }
     }
 }
 //Pushes solidified blocsk down
-void alldown(int **t, int r[sizey])
+void alldown(int **t,char **cl, int r[sizey])
 {
     int i,g,j;
     for(i = 0; i < sizey; i++)
@@ -64,6 +65,8 @@ void alldown(int **t, int r[sizey])
                     {
                         t[j][g] = 0;
                         t[j+1][g] = 2;
+                        cl[j+1][g] = cl[j][g];
+                        cl[j][g] = 'E';
                     }
                 }
             }
@@ -159,7 +162,7 @@ void setspeed(char *sp, int score)
         break;}
 }
 //Cleans out field
-void cleanfield(int **t)
+void cleanfield(int **t,char **cl)
 {
     int i,g;
     for(i = 0; i < sizey; i++)
@@ -167,6 +170,7 @@ void cleanfield(int **t)
         for(g = 0; g< sizex; g++)
         {
             t[i][g] = 0;
+            cl[i][g] = 'E';
         }
     }
 }
@@ -196,18 +200,18 @@ void reachdown(SDL_Surface *screen,int **field,obj *current, obj *nxt, obj *pred
      dnext(screen,*nxt);
      SDL_Flip(screen);
 }
-void stdevent(SDL_Surface *screen,txt *tx16,char sscore[10],int **field, int row[sizey], int *score, obj *predict,obj *current)
+void stdevent(SDL_Surface *screen,txt *tx16,char sscore[10],int **field,char** cfield, int row[sizey], int *score, obj *predict,obj *current)
 {
     checkrow(field,row);
-    clrrow(field,row);
-    alldown(field,row);
+    clrrow(field,cfield,row);
+    alldown(field,cfield,row);
     removepred(field,*predict);
     *predict = dropm(field,*current);
     placepred(field,*predict);
     *score += cntscore(row);
     zerow(row);
     dscore(*score,sscore,screen,tx16);
-    dblocks(screen, field);
+    dblocks(screen, field,cfield);
     SDL_Flip(screen);
 }
 //Checks if field is empty

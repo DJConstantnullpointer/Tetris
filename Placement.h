@@ -5,8 +5,8 @@
 void place(int **t, block a);
 void dis(int **t, block a);
 obj genobj();
-void placeobj(int **t, obj tetris);
-void removeobj(int **t, obj tetris);
+void placeobj(int **t,char **c, obj tetris);
+void removeobj(int **t,char **c, obj tetris);
 void placepred(int **t, obj pred);
 void removepred(int **t, obj pred);
 

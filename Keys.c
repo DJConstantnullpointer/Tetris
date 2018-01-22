@@ -1,11 +1,11 @@
 #include "Keys.h"
 
 //Down key instructions
-void kdowng(SDL_Surface *screen, obj *current, obj *predict, int **field)
+void kdowng(SDL_Surface *screen, obj *current, obj *predict, int **field,char** cfield)
 {
-    *current = down(field, *current);
+    *current = down(field,cfield, *current);
     *predict = predm(field,*current,*predict);
-    dblocks(screen, field);
+    dblocks(screen, field,cfield);
     SDL_Flip(screen);
 }
 void kdownp(SDL_Surface *screen,int *cursor)
@@ -23,27 +23,27 @@ void kdownm(SDL_Surface *screen,int *cursor)
     SDL_Flip(screen);
 }
 //Left key instructions
-void kleftg(SDL_Surface *screen, obj *current, obj *predict, int **field)
+void kleftg(SDL_Surface *screen, obj *current, obj *predict, int **field,char** cfield)
 {
-    *current = left(field, *current);
+    *current = left(field,cfield, *current);
     *predict = predm(field,*current,*predict);
-    dblocks(screen, field);
+    dblocks(screen, field,cfield);
     SDL_Flip(screen);
 }
 //Right key instructions
-void krightg(SDL_Surface *screen, obj *current, obj *predict, int **field)
+void krightg(SDL_Surface *screen, obj *current, obj *predict, int **field,char** cfield)
 {
-    *current = right(field, *current);
+    *current = right(field,cfield, *current);
     *predict = predm(field,*current,*predict);
-    dblocks(screen, field);
+    dblocks(screen, field,cfield);
     SDL_Flip(screen);
 }
 //Up key insturctions
-void kupg(SDL_Surface *screen, obj *current, obj *predict, int **field)
+void kupg(SDL_Surface *screen, obj *current, obj *predict, int **field,char** cfield)
 {
-    *current = lftr(field, *current);
+    *current = lftr(field,cfield, *current);
     *predict = predm(field,*current,*predict);
-    dblocks(screen, field);
+    dblocks(screen, field,cfield);
     SDL_Flip(screen);
 }
 void kupp(SDL_Surface *screen,int *cursor)
@@ -62,7 +62,7 @@ void kupm(SDL_Surface *screen,int *cursor)
 }
 //Enter key instructions
 void kenterg(SDL_Surface *screen, bool *play, bool *pause,int *cursor,txt *tx108,txt *tx50,txt *tx16,
-             int **field,FILE *save, obj *current, obj *nxt,obj *predict,int *score)
+             int **field,char** cfield,FILE *save, obj *current, obj *nxt,obj *predict,int *score)
 {
     switch(*cursor)
     {
@@ -83,18 +83,19 @@ void kenterg(SDL_Surface *screen, bool *play, bool *pause,int *cursor,txt *tx108
         SDL_Flip(screen);
         break;
     case 1:
+        Mix_HaltMusic();
         *play = false;
         boxRGBA(screen,0,0,410,470,0,0,0,255);
         dmenu(screen,tx108,tx50);
         SDL_Flip(screen);
         *cursor = 0;
         *pause = false;
-        cleanfield(field);
+        cleanfield(field,cfield);
         break;
     }
 }
 void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *hsscreen,txt *tx88,txt *tx50,txt *tx24, txt *tx16,
-             int **field,obj *current, obj *nxt, obj *predict,int *score, char sscore [10], int *cursor, FILE *save,FILE *hs)
+             int **field,char** cfield,obj *current, obj *nxt, obj *predict,int *score, char sscore [10], int *cursor, FILE *save,FILE *hs,Mix_Music *music)
 {
     switch(*cursor)
     {
@@ -111,10 +112,11 @@ void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *h
         *nxt = genobj();
         *predict = dropm(field,*current);
         placepred(field,*predict);
-        placeobj(field,*current);
-        dblocks(screen,field);
+        placeobj(field,cfield,*current);
+        dblocks(screen,field,cfield);
         dnext(screen,*nxt);
         SDL_Flip(screen);
+        Mix_PlayMusic(music, 99);
         break;
     case 1:
         save = fopen("savegame.txt","rb");
@@ -141,7 +143,7 @@ void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *h
                 removepred(field, *predict);
                 *predict = dropm(field, *current);
                 placepred(field, *predict);
-                dblocks(screen, field);
+                dblocks(screen, field,cfield);
                 dnext(screen, *nxt);
                 SDL_Flip(screen);
                 break;

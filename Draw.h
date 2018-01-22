@@ -4,7 +4,8 @@
 
 void print(char* wd,SDL_Surface *s, txt *word);
 void map(SDL_Surface *s);
-void dblocks(SDL_Surface *s,int **t);
+void dframe(SDL_Surface *s, int x, int y);
+void dblocks(SDL_Surface *s,int **t,char** cfield);
 void dnext(SDL_Surface *s,obj nxt);
 void settp(txt *wd, int x, int y, int w, int h);
 void dpause(SDL_Surface *s, txt *p);

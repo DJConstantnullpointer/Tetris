@@ -1,11 +1,13 @@
 #include <SDL.h>
 #include <SDL_gfxPrimitives.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 
 #ifndef DATAS_H_INCLUDED
 #define DATAS_H_INCLUDED
 #define sizex 10
 #define sizey 20
+static const char *Tetristheme = "Tetristheme.mp3";
 
 //Structures
 typedef struct block {int x,y;} block;
