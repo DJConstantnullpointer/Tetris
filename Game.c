@@ -178,8 +178,10 @@ void cleanfield(int **t,char **cl)
 void seths(int *score, FILE *hs)
 {
     int high=0;
-    hs = fopen("hs.txt","wb+");
+    hs = fopen("hs.txt","rb+");
     fread(&high,sizeof(int),1,hs);
+    fclose(hs);
+    hs = fopen("hs.txt","wb+");
     if(*score > high)
     {
         high = *score;

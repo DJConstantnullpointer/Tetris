@@ -191,6 +191,15 @@ int main(int argc, char *argv[])
                         SDL_Flip(screen);
                     }
                     break;
+            case SDLK_m:
+                if(!pause && play)
+                {
+                    Mix_PauseMusic();
+                }
+                else if(pause && play)
+                {
+                    Mix_ResumeMusic();
+                }
             default:
                 break;
             }
