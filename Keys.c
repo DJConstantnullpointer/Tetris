@@ -67,7 +67,7 @@ void kenterg(SDL_Surface *screen, bool *play, bool *pause,int *cursor,txt *tx108
     switch(*cursor)
     {
     case 0:
-        save = fopen("savegame.txt","wb");
+        /*save = fopen("savegame.txt","wb");
         fwrite(score,sizeof(int),1,save);
         fwrite(current,sizeof(obj),1,save);
         fwrite(nxt,sizeof(obj),1,save);
@@ -81,7 +81,7 @@ void kenterg(SDL_Surface *screen, bool *play, bool *pause,int *cursor,txt *tx108
         print("Game saved",screen,tx16);
         settp(tx16,332,52,40,20);
         SDL_Flip(screen);
-        break;
+        break;*/
     case 1:
         Mix_HaltMusic();
         *play = false;
@@ -119,7 +119,7 @@ void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *h
         Mix_PlayMusic(music, 99);
         break;
     case 1:
-        save = fopen("savegame.txt","rb");
+        /*save = fopen("savegame.txt","rb");
         if (save == NULL) {break;}
         else{
         fread(score,sizeof(int),1,save);
@@ -148,7 +148,7 @@ void kenterm(SDL_Surface *screen, bool *play,bool *quit,bool *ctrlscreen,bool *h
                 SDL_Flip(screen);
                 break;
             } else break;
-        }
+        }*/
         case 2:
         dcontrols(screen,tx88,tx24,tx16);
         *ctrlscreen = true;
